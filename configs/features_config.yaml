@@ -1,0 +1,11 @@
+vectorizer:
+  type: tfidf
+  params:
+    max_features: 5000
+    stop_words: "english"
+    ngram_range: [1, 2]
+    min_df: 2
+
+storage:
+  base_path: "data/features"
+  latest_pointer: "data/features/latest_pointer.json"
