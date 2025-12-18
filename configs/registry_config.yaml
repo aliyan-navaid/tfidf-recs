@@ -1,0 +1,67 @@
+base_path: "data/artifacts"
+base_version: "v1"
+
+artifact_types:
+  # Feature matrix artifacts (sparse matrices)
+  feature_matrix:
+    format: "npz"
+    compression: null
+    required: true
+    dependencies: []
+    description: "TF-IDF or other sparse feature matrices"
+
+  # Vectorizer artifacts (sklearn transformers)
+  vectorizer:
+    format: "joblib"
+    compression: null
+    required: true
+    dependencies: []
+    description: "Fitted vectorizer objects (TfidfVectorizer, etc.)"
+
+  # Metadata artifacts (configuration and stats)
+  metadata:
+    format: "json"
+    compression: null
+    required: true
+    dependencies: []
+    description: "Feature generation metadata and statistics"
+
+  # Processed data artifacts (DataFrames)
+  processed_data:
+    format: "parquet"
+    compression: "snappy"
+    required: false
+    dependencies: []
+    description: "Processed data ready for feature extraction"
+
+  # Raw data artifacts (source data)
+  raw_data:
+    format: "parquet"
+    compression: null
+    required: false
+    dependencies: []
+    description: "Raw input data"
+
+  # Model artifacts (trained models)
+  model:
+    format: "joblib"
+    compression: null
+    required: false
+    dependencies: ["feature_matrix", "vectorizer"]
+    description: "Trained recommendation or ML models"
+
+  # Similarity matrix artifacts
+  similarity_matrix:
+    format: "npz"
+    compression: null
+    required: false
+    dependencies: ["feature_matrix"]
+    description: "Precomputed similarity matrices"
+
+  # Index mapping artifacts
+  index_mapping:
+    format: "json"
+    compression: null
+    required: false
+    dependencies: []
+    description: "ID to index mappings for quick lookups"
