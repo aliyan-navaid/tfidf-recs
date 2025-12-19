@@ -46,7 +46,15 @@ def load_npz(file_path: Path) -> Any:
         return scipy_load_npz(file_path)
     except:
         import numpy as np
-        return np.load(file_path, allow_pickle=True)
+        npz_file = np.load(file_path, allow_pickle=True)
+        # np.load on .npz returns a dict like object
+        # lazily loads arrays by key
+        # if the file contains 'data' key, it represents the primary payload.
+        # return that.
+        if 'data' in npz_file:
+            return npz_file['data']
+        # Otherwise return the file object (for custom formats)
+        return npz_file
 
 def save_npz(data: Any, file_path: Path) -> None:
     """Save npz file - handles both scipy sparse matrices and numpy arrays."""
