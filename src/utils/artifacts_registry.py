@@ -126,7 +126,26 @@ class ArtifactsRegistry:
         self.active_version = latest_version
         
         version_data = self._load_version_metadata(latest_version)
-        self.versions[latest_version] = ArtifactVersion.from_dict(version_data)
+        self.versions[latest_version] = ArtifactVersion.from_dict(
+            version_data
+        )
+    
+    def load_version(self, version_id: str) -> None:
+        """
+        Load a specific version by its version ID. Raises FileNotFoundError
+        if the version does not exist.
+        """
+        self.active_version = version_id
+        version_data = self._load_version_metadata(version_id)
+        self.versions[version_id] = ArtifactVersion.from_dict(version_data)
+    
+    def list_versions(self) -> List[str]:
+        """
+        List all available versions in the registry. Returns a sorted list
+        of version IDs in descending order.
+        """
+        candidates = self._find_version_candidates()
+        return sorted(candidates, reverse=True)
     
     def _find_version_candidates(self) -> list:
         pattern = re.compile(
@@ -207,9 +226,6 @@ class ArtifactsRegistry:
             raise RuntimeError("Error: No active version set.")
     
         version = self.versions[self.active_version]
-        
-        # Validate required artifacts are present
-        self._validate_required_artifacts(version)
     
         self._check_artifact_exists(version, artifact_type, artifact_name)
         return self._load_artifact_data(
@@ -351,10 +367,6 @@ class ArtifactsRegistry:
         self, 
         artifact_type: str
     ) -> None:
-        """
-        Validate that all dependencies for an artifact type are satisfied.
-        Checks if dependent artifacts are already registered in the version.
-        """
         config = self.artifacts_config[artifact_type]
         dependencies = config.dependencies
         
@@ -379,10 +391,6 @@ class ArtifactsRegistry:
         self, 
         version: ArtifactVersion
     ) -> None:
-        """
-        Validate that all required artifacts are present in the version.
-        Raises ValueError if any required artifact type is missing.
-        """
         missing_required = []
         
         for artifact_type, config in self.artifacts_config.items():
