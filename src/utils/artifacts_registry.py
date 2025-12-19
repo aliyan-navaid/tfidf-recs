@@ -78,6 +78,25 @@ class ArtifactConfig:
         )
 
 class ArtifactsRegistry:
+    """
+    Centralized registry for managing artifacts with versioning,
+    dependencies, and required artifacts.
+
+    ArtifactsRegistry(
+        base_path, base_version, artifact_types: {str -> ArtifactConfig}
+    )
+
+    Operations:
+    - load_latest()
+    - create_version()
+    - register_artifact(artifact_type, artifact_name, artifact_data, metadata)
+    - get_artifact(artifact_type, artifact_name)
+    - commit()
+
+    Usage:
+    with registry(mode='create') as reg:
+    """
+
     def __init__(self, config: Dict[str, Any]):
         self.base_path = Path(config.get("base_path", "data/artifacts"))
         self.base_version = config.get("base_version", "v1")
@@ -93,6 +112,11 @@ class ArtifactsRegistry:
         self.pending_artifacts: Dict[str, Any] = {}
 
     def load_latest(self) -> None:
+        """
+        Load the latest version of artifacts from the registry.
+        Sets active_version accordingly.
+        """
+
         candidates = self._find_version_candidates()
         
         if not candidates:
@@ -144,7 +168,7 @@ class ArtifactsRegistry:
         artifact_name: str,
         artifact_data: Any,
         metadata: Optional[Dict[str, Any]] = None
-    ):
+    ) -> 'ArtifactsRegistry':
         if self.active_version is None:
             raise RuntimeError("No active version set.")
     
@@ -171,6 +195,8 @@ class ArtifactsRegistry:
         self.pending_artifacts[
             (version.version_id, artifact_type, artifact_name)
         ] = artifact_data
+
+        return self
 
     def get_artifact(
         self, 
