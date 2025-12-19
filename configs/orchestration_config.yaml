@@ -1,0 +1,40 @@
+# Orchestration Pipeline Configuration
+# Defines the workflow steps and their parameters
+
+steps:
+  # Step 1: Load processed data
+  load_data:
+    input_path: "data/processed/movies_processed.parquet"
+    text_column: "combined_text"
+
+  # Step 2: Fit vectorizer
+  vectorizer:
+    type: "tfidf"
+    params:
+      max_features: 5000
+      stop_words: "english"
+      ngram_range: [1, 2]
+      min_df: 0.002
+      max_df: 0.7
+      sublinear_tf: true
+
+  # Step 3: Generate feature matrix (inherits from vectorizer)
+  features:
+    artifact_name: "features"
+
+  # Step 4: Generate similarity matrix
+  similarity:
+    strategy: "cosine"
+    artifact_name: "similarity"
+
+# Orchestrator settings
+pipeline:
+  auto_commit: true
+  validate_artifacts: true
+  
+# Artifact naming conventions (optional overrides)
+artifacts:
+  vectorizer_name: "vectorizer"
+  features_name: "features"
+  metadata_name: "metadata"
+  similarity_name: "similarity"
