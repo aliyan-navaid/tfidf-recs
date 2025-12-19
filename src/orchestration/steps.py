@@ -196,13 +196,17 @@ class GenerateFeaturesStep(OrchestrationStep):
 
         print(f"  ✓ Registered feature_matrix artifact")
 
-        # Register metadata
+        # Register metadata (including movie IDs for recommendations)
+        df = context.get("dataframe")
+        movie_ids = df['movieId'].tolist() if 'movieId' in df.columns else list(range(len(df)))
+        
         metadata = {
             "input_path": context["input_path"],
             "num_documents": context["num_documents"],
             "vectorizer_type": context["vectorizer_type"],
             "text_column": text_column,
             "feature_shape": list(feature_matrix.shape),
+            "movie_ids": movie_ids,
         }
 
         registry.register_artifact(
