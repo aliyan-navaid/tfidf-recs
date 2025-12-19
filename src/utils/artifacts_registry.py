@@ -66,10 +66,15 @@ class VersionContext:
         return self.registry
 
     def __exit__(self, exc_type, exc_value, traceback):
-        if exc_type is None and self.mode == "create":
+        # On successful exit, persist any pending artifacts for the
+        # currently active version, regardless of whether we are
+        # creating a new version or updating an existing one.
+        if exc_type is None and self.mode in {"create", "load"}:
             self.registry.commit()
-        else:
-            self.registry.active_version = self.previous_version
+
+        # Restore the previously active version in all cases so the
+        # registry does not remain pinned to the context's version.
+        self.registry.active_version = self.previous_version
 
         return False  # Do not suppress exceptions
 
