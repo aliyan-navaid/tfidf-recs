@@ -6,12 +6,31 @@ import sys
 import click
 from pathlib import Path
 
-# Add src to path
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+# Add project root and src to path
+PROJECT_ROOT = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(PROJECT_ROOT / 'src'))  # For internal imports
+sys.path.insert(0, str(PROJECT_ROOT))          # For src.* imports
 
 from src.utils.config_loader import ConfigLoader
 from src.utils.artifacts_registry import ArtifactsRegistry
 from src.orchestration.orchestrator import create_orchestrator
+
+
+def get_registry_config():
+    """Helper function to load registry config with absolute paths."""
+    config_loader = ConfigLoader(config_dir=str(PROJECT_ROOT / 'configs'))
+    config_loader.load_all()
+    registry_config = config_loader.get('registry')
+    
+    if not registry_config:
+        click.echo(click.style("✗ Error: Registry configuration not found", fg='red'))
+        sys.exit(1)
+    
+    # Resolve base_path to absolute path
+    if 'base_path' in registry_config:
+        registry_config['base_path'] = str(PROJECT_ROOT / registry_config['base_path'])
+    
+    return registry_config
 
 
 @click.group()
@@ -45,7 +64,7 @@ def cli():
 def run(input, steps, version, data_config):
     """Execute the full pipeline or specific steps."""
     # Load configurations
-    config_loader = ConfigLoader()
+    config_loader = ConfigLoader(config_dir=str(PROJECT_ROOT / 'configs'))
     config_loader.load_all()
     
     orchestration_config = config_loader.get('orchestration', {})
@@ -66,7 +85,17 @@ def run(input, steps, version, data_config):
         click.echo("Use --input or configure in orchestration_config.yaml")
         sys.exit(1)
     
+    # Resolve input path to absolute if relative
+    if not Path(input_path).is_absolute():
+        input_path = str(PROJECT_ROOT / input_path)
+    
+    # Create registry with absolute paths
+    registry_config = get_registry_config()
+    registry = ArtifactsRegistry(registry_config)
+    
+    # Create orchestrator with the registry
     orchestrator = create_orchestrator(orchestration_config)
+    orchestrator.registry = registry
     
     # Execute
     try:
@@ -101,10 +130,7 @@ def run(input, steps, version, data_config):
 )
 def load(version):
     """Load and inspect a version."""
-    config_loader = ConfigLoader()
-    config_loader.load_all()
-    registry_config = config_loader.get('registry')
-    
+    registry_config = get_registry_config()
     registry = ArtifactsRegistry(registry_config)
     
     try:
@@ -142,10 +168,7 @@ def load(version):
 @cli.command('list-versions')       # hyphen separator for CLI
 def list_versions():
     """List all available versions."""
-    config_loader = ConfigLoader()
-    config_loader.load_all()
-    registry_config = config_loader.get('registry')
-    
+    registry_config = get_registry_config()
     registry = ArtifactsRegistry(registry_config)
     versions = registry.list_versions()
     
@@ -178,7 +201,7 @@ def list_versions():
 )
 def config(config_type):
     """Display current configuration."""
-    config_loader = ConfigLoader()
+    config_loader = ConfigLoader(config_dir=str(PROJECT_ROOT / 'configs'))
     config_loader.load_all()
     
     click.echo(click.style("Current Configuration:", fg='yellow', bold=True))
