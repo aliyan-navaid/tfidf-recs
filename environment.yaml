@@ -1,6 +1,7 @@
 name: recsys
 channels:
   - defaults
+  - conda-forge
 dependencies:
   - python=3.13
   - numpy
@@ -10,3 +11,5 @@ dependencies:
   - ipykernel
   - pyyaml
   - pyarrow
+  - click
+  - joblib
